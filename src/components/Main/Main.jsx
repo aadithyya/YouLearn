@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./Main.css";
 import runChat from "../../config/geminiClient";
-import {
-  User, Lightbulb, MessageSquare, FileCode,
-  Navigation, Mic, Send, Image, Menu
-} from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGraduationCap, faBrain, faCubes, faNewspaper } from "@fortawesome/free-solid-svg-icons";
+import { User, Mic, Send, Image, Menu } from "lucide-react";
 
 const formatText = (text) => {
   const lines = text.split("\n");
@@ -63,10 +62,42 @@ const renderInline = (text) => {
 };
 
 const SUGGESTIONS = [
-  { text: "Suggest the best route for a road trip", icon: <Navigation size={18} strokeWidth={1.5} /> },
-  { text: "Give me a fun fact I probably don't know", icon: <Lightbulb size={18} strokeWidth={1.5} /> },
-  { text: "Help me write a message to my friend", icon: <MessageSquare size={18} strokeWidth={1.5} /> },
-  { text: "Explain how React hooks work", icon: <FileCode size={18} strokeWidth={1.5} /> },
+  {
+    text: (
+      <>
+        <h3>Feynman <br /> Technique</h3>
+        <p>Improves deep understanding through simplified self-explanation practice.</p>
+      </>
+    ),
+    icon: <FontAwesomeIcon icon={faGraduationCap} />,
+  },
+  {
+    text: (
+      <>
+        <h3>Active <br /> Recall</h3>
+        <p>Strengthens memory by forcing active information retrieval.</p>
+      </>
+    ),
+    icon: <FontAwesomeIcon icon={faBrain} />,
+  },
+  {
+    text: (
+      <>
+        <h3>Explain like <br /> I'm 5</h3>
+        <p>Simplifies complex topics for clearer conceptual understanding.</p>
+      </>
+    ),
+    icon: <FontAwesomeIcon icon={faCubes} />,
+  },
+  {
+    text: (
+      <>
+        <h3>Question Paper <br /> Retrieval</h3>
+        <p>Identifies patterns to optimize focused exam preparation.</p>
+      </>
+    ),
+    icon: <FontAwesomeIcon icon={faNewspaper} />,
+  },
 ];
 
 const Main = ({ onMenuClick }) => {
@@ -77,7 +108,6 @@ const Main = ({ onMenuClick }) => {
   const textareaRef = useRef(null);
   const bottomRef = useRef(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -85,7 +115,6 @@ const Main = ({ onMenuClick }) => {
     ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
   }, [input]);
 
-  // Scroll to bottom on new message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -120,7 +149,6 @@ const Main = ({ onMenuClick }) => {
 
   return (
     <div className="main">
-      {/* Nav */}
       <div className="nav">
         <div className="nav-left">
           <button className="nav-menu-btn" onClick={onMenuClick}>
@@ -133,7 +161,6 @@ const Main = ({ onMenuClick }) => {
         </div>
       </div>
 
-      {/* Chat / Welcome area */}
       <div className="main-container">
         {showWelcome ? (
           <div className="welcome">
@@ -143,7 +170,7 @@ const Main = ({ onMenuClick }) => {
             </div>
             <div className="cards">
               {SUGGESTIONS.map((s, i) => (
-                <div className="card" key={i} onClick={() => setInput(s.text)}>
+                <div className="card" key={i}>
                   <p>{s.text}</p>
                   <div className="card-icon">{s.icon}</div>
                 </div>
@@ -175,13 +202,11 @@ const Main = ({ onMenuClick }) => {
             )}
 
             {error && <div className="error-bubble">{error}</div>}
-
             <div ref={bottomRef} />
           </div>
         )}
       </div>
 
-      {/* Input */}
       <div className="main-bottom">
         <div className="searchbox">
           <textarea
@@ -209,7 +234,6 @@ const Main = ({ onMenuClick }) => {
             </button>
           </div>
         </div>
-        <p className="bottom-info">AI can make mistakes. Verify important information.</p>
       </div>
     </div>
   );

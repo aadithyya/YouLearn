@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "./Login.css";
-import loginpic from "../../assets/loginpic.png";
+import loginpic from "../../assets/loginreal.png";
 
 const Login = ({ onLogin }) => {
-  const [mode, setMode] = useState(null); // null | 'login' | 'signup'
+  const [mode, setMode] = useState(null); 
   const [form, setForm] = useState({ email: "", password: "", name: "" });
 
   const handleChange = (e) =>
@@ -16,17 +16,17 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="login-page">
-      {/* Left panel */}
+  
       <div className="login-left">
         <div className="login-brand">YouLearn</div>
 
         <div className="login-content">
           <h1 className="login-heading">
-            Bring Yourself<br />To The Top
+       Start Your Study <br/>
+       with YouLearn.
           </h1>
           <p className="login-sub">
-            Stop looking for a secret trick and recognise that the best
-            version of yourself should be your vision, not anybody else's
+             Quick login to jump into your AI-powered study workspace.
           </p>
 
           {mode === null && (
@@ -35,7 +35,7 @@ const Login = ({ onLogin }) => {
                 Log In
               </button>
               <button className="btn-secondary" onClick={() => setMode("signup")}>
-                Sign In
+                Sign Up
               </button>
             </div>
           )}
@@ -119,7 +119,6 @@ const Login = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* Right panel — illustration */}
       <div className="login-right">
         <img src={loginpic} alt="Grow illustration" className="login-illustration" />
       </div>

@@ -1,4 +1,4 @@
-/* ── Layout ── */
+
 .main {
   flex: 1;
   height: 100vh;
@@ -9,14 +9,15 @@
   background: #fff;
 }
 
-/* ── Nav ── */
+
 .main .nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 22px;
+  font-family: Arial, Helvetica, sans-serif;
   padding: 20px;
-  color: #585858;
+  color: #030303;
   flex-shrink: 0;
 }
 
@@ -40,7 +41,7 @@
   font-size: 18px;
   transition: background 0.2s;
 }
-.nav-menu-btn:hover { background: #f0f4f9; }
+.nav-menu-btn:hover { background: #ff0000; }
 
 .main .nav .user-icon {
   height: 40px;
@@ -53,7 +54,7 @@
   cursor: pointer;
 }
 
-/* ── Scrollable area ── */
+
 .main-container {
   flex: 1;
   overflow-y: auto;
@@ -62,7 +63,7 @@
   flex-direction: column;
 }
 
-/* ── Welcome / Greet ── */
+
 .welcome {
   flex: 1;
   display: flex;
@@ -80,13 +81,13 @@
   padding: 20px;
 }
 .main .greet span {
-  background: linear-gradient(16deg, #4b90ff, #ff5546);
+  background: linear-gradient(16deg, #3f3e3e, #b805c1cf);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ── Suggestion cards ── */
+
 .main .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -102,12 +103,22 @@
   position: relative;
   cursor: pointer;
   transition: background 0.3s ease-in-out;
+  overflow: hidden;
 }
 .main .card:hover { background: #dde1e7; }
 
+.main .card h3 {
+  color: #282828;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
 .main .card p {
-  color: #585858;
-  font-size: 17px;
+  color: #888;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .main .card .card-icon {
@@ -124,7 +135,6 @@
   color: #585858;
 }
 
-/* ── Chat history ── */
 .chat-history {
   display: flex;
   flex-direction: column;
@@ -135,7 +145,7 @@
   padding-top: 20px;
 }
 
-/* User message */
+
 .msg-user {
   display: flex;
   justify-content: flex-end;
@@ -151,7 +161,7 @@
   line-height: 1.6;
 }
 
-/* AI message */
+
 .msg-ai {
   display: flex;
   gap: 15px;

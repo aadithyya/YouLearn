@@ -25,7 +25,7 @@ const Sidebar = ({ extended, onToggle, onClose }) => {
               <p className="recent-title">Recent</p>
               <div className="recent-entry">
                 <FontAwesomeIcon icon={faNoteSticky} />
-                <p>how are you?</p>
+                <p></p>
               </div>
             </div>
           )}
