@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+pdfplumber
+pytesseract
+pdf2image
+langchain-text-splitters
+langchain-qdrant
+langchain-huggingface
+langchain-groq
+python-dotenv
+pydantic

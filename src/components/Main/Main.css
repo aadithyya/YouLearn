@@ -68,71 +68,25 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
 }
 
 .main .greet {
-  margin: 50px 0 30px;
   font-size: 56px;
   color: #c4c7c5;
   font-weight: 500;
   padding: 20px;
+  text-align: center;
 }
 .main .greet span {
   background: linear-gradient(16deg, #3f3e3e, #b805c1cf);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-
-.main .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 15px;
-  padding: 20px;
-}
-
-.main .card {
-  height: 200px;
-  padding: 15px;
-  background: #f0f4f9;
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.3s ease-in-out;
-  overflow: hidden;
-}
-.main .card:hover { background: #dde1e7; }
-
-.main .card h3 {
-  color: #282828;
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-.main .card p {
-  color: #888;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.main .card .card-icon {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 35px;
-  height: 35px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #585858;
 }
 
 .chat-history {
@@ -257,6 +211,16 @@
   font-size: 14px;
 }
 
+/* ── PDF bubble ── */
+.pdf-bubble {
+  background: linear-gradient(135deg, #e8eaf6, #e3f2fd) !important;
+  border: 1px solid #c5cae9;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: #1a237e !important;
+}
+
 /* ── Input area ── */
 .main-bottom {
   flex-shrink: 0;
@@ -346,7 +310,6 @@
 @media (max-width: 768px) {
   .nav-menu-btn { display: flex; }
   .main .greet { font-size: 36px; }
-  .main .cards { grid-template-columns: 1fr 1fr; }
   .msg-user .bubble { max-width: 85%; }
   .main-container { padding: 0 12px 16px; }
   .main-bottom { padding: 0 12px 12px; }
@@ -354,5 +317,4 @@
 
 @media (max-width: 480px) {
   .main .greet { font-size: 28px; padding: 12px; }
-  .main .cards { grid-template-columns: 1fr; }
 }

@@ -1,10 +1,10 @@
 import React from 'react'
 import './Sidebar.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faPlus, faClockRotateLeft, faGear } from '@fortawesome/free-solid-svg-icons'
-import { faNoteSticky, faCircleQuestion } from '@fortawesome/free-regular-svg-icons'
+import { faBars, faPlus, faGear } from '@fortawesome/free-solid-svg-icons'
+import { faNoteSticky, faTrashCan } from '@fortawesome/free-regular-svg-icons'
 
-const Sidebar = ({ extended, onToggle, onClose }) => {
+const Sidebar = ({ extended, onToggle, onClose, onNewChat, chats = [], activeChatId, onSelectChat, onDeleteChat }) => {
   return (
     <>
       {extended && <div className="sidebar-overlay" onClick={onClose} />}
@@ -15,7 +15,7 @@ const Sidebar = ({ extended, onToggle, onClose }) => {
             <FontAwesomeIcon icon={faBars} />
           </div>
 
-          <div className="newchat">
+          <div className="newchat" onClick={onNewChat}>
             <FontAwesomeIcon icon={faPlus} />
             {extended && <p>New Chat</p>}
           </div>
@@ -23,23 +23,33 @@ const Sidebar = ({ extended, onToggle, onClose }) => {
           {extended && (
             <div className="recent">
               <p className="recent-title">Recent</p>
-              <div className="recent-entry">
-                <FontAwesomeIcon icon={faNoteSticky} />
-                <p></p>
-              </div>
+              {chats.map(chat => (
+                <div 
+                  key={chat.id} 
+                  className={`recent-entry ${chat.id === activeChatId ? 'active' : ''}`}
+                  onClick={() => onSelectChat(chat.id)}
+                >
+                  <div className="recent-entry-left">
+                    <FontAwesomeIcon icon={faNoteSticky} />
+                    <p>{chat.title}</p>
+                  </div>
+                  <div 
+                    className="delete-chat-btn"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (onDeleteChat) onDeleteChat(chat.id); 
+                    }} 
+                    title="Delete Chat"
+                  >
+                    <FontAwesomeIcon icon={faTrashCan} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
         <div className="bottom">
-          <div className="bottom-item">
-            <FontAwesomeIcon icon={faCircleQuestion} />
-            {extended && <p>Help</p>}
-          </div>
-          <div className="bottom-item">
-            <FontAwesomeIcon icon={faClockRotateLeft} />
-            {extended && <p>History</p>}
-          </div>
           <div className="bottom-item">
             <FontAwesomeIcon icon={faGear} />
             {extended && <p>Settings</p>}

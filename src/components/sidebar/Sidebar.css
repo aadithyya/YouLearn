@@ -44,7 +44,16 @@
 }
 .sidebar .newchat:hover { background: #d8dce5; }
 
-.sidebar .recent { display: flex; flex-direction: column; }
+.sidebar .recent { 
+  display: flex; 
+  flex-direction: column; 
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.sidebar .recent::-webkit-scrollbar { width: 4px; }
+.sidebar .recent::-webkit-scrollbar-track { background: transparent; }
+.sidebar .recent::-webkit-scrollbar-thumb { background: #c4c7c5; border-radius: 4px; }
 
 .sidebar .recent-title {
   margin-top: 30px;
@@ -56,17 +65,46 @@
 .sidebar .recent-entry {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   padding: 10px;
   border-radius: 50px;
   color: #282828;
   cursor: pointer;
   font-size: 14px;
   white-space: nowrap;
-  overflow: hidden;
+  transition: background-color 0.2s, font-weight 0.2s;
 }
 .sidebar .recent-entry:hover { background-color: #e2e6eb; }
-.sidebar .recent-entry p { overflow: hidden; text-overflow: ellipsis; }
+.sidebar .recent-entry.active { 
+  background-color: #d8dce5; 
+  font-weight: 500;
+}
+
+.sidebar .recent-entry-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.sidebar .recent-entry-left p { overflow: hidden; text-overflow: ellipsis; }
+
+.sidebar .delete-chat-btn {
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+  color: #777;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sidebar .recent-entry:hover .delete-chat-btn {
+  opacity: 1;
+}
+
+.sidebar .delete-chat-btn svg {
+  font-size: 15px;
+}
 
 .sidebar .bottom {
   display: flex;
@@ -114,5 +152,9 @@
     inset: 0;
     background: rgba(0,0,0,0.3);
     z-index: 199;
+  }
+  .sidebar .delete-chat-btn {
+    opacity: 1;
+    padding: 8px;
   }
 }

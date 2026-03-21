@@ -1,112 +1,22 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./Main.css";
 import runChat from "../../config/geminiClient";
+import { formatText } from "../../utils/textFormatters.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGraduationCap, faBrain, faCubes, faNewspaper } from "@fortawesome/free-solid-svg-icons";
-import { User, Mic, Send, Image, Menu } from "lucide-react";
+import { faGraduationCap, faBrain, faCubes, faNewspaper, faFilePdf } from "@fortawesome/free-solid-svg-icons";
+import { User, Send, Menu, FileText } from "lucide-react";
+import { UserButton, useUser } from "@clerk/react";
 
-const formatText = (text) => {
-  const lines = text.split("\n");
-  const elements = [];
-  let listItems = [];
 
-  const flushList = (key) => {
-    if (listItems.length > 0) {
-      elements.push(<ul key={`ul-${key}`}>{listItems}</ul>);
-      listItems = [];
-    }
-  };
 
-  lines.forEach((line, i) => {
-    const trimmed = line.trim();
 
-    if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-      listItems.push(<li key={i}>{renderInline(trimmed.slice(2))}</li>);
-      return;
-    }
-
-    const numMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
-    if (numMatch) {
-      listItems.push(<li key={i}>{renderInline(numMatch[2])}</li>);
-      return;
-    }
-
-    flushList(i);
-
-    if (trimmed === "") {
-      elements.push(<br key={i} />);
-      return;
-    }
-
-    if (trimmed.startsWith("## ")) {
-      elements.push(
-        <p key={i} style={{ fontWeight: 600, marginBottom: "4px" }}>
-          {renderInline(trimmed.slice(3))}
-        </p>
-      );
-      return;
-    }
-
-    elements.push(<p key={i}>{renderInline(trimmed)}</p>);
-  });
-
-  flushList("end");
-  return elements;
-};
-
-const renderInline = (text) => {
-  const parts = text.split(/\*\*(.*?)\*\*/g);
-  return parts.map((part, i) =>
-    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-  );
-};
-
-const SUGGESTIONS = [
-  {
-    text: (
-      <>
-        <h3>Feynman <br /> Technique</h3>
-        <p>Improves deep understanding through simplified self-explanation practice.</p>
-      </>
-    ),
-    icon: <FontAwesomeIcon icon={faGraduationCap} />,
-  },
-  {
-    text: (
-      <>
-        <h3>Active <br /> Recall</h3>
-        <p>Strengthens memory by forcing active information retrieval.</p>
-      </>
-    ),
-    icon: <FontAwesomeIcon icon={faBrain} />,
-  },
-  {
-    text: (
-      <>
-        <h3>Explain like <br /> I'm 5</h3>
-        <p>Simplifies complex topics for clearer conceptual understanding.</p>
-      </>
-    ),
-    icon: <FontAwesomeIcon icon={faCubes} />,
-  },
-  {
-    text: (
-      <>
-        <h3>Question Paper <br /> Retrieval</h3>
-        <p>Identifies patterns to optimize focused exam preparation.</p>
-      </>
-    ),
-    icon: <FontAwesomeIcon icon={faNewspaper} />,
-  },
-];
-
-const Main = ({ onMenuClick }) => {
+const Main = ({ messages = [], onMessagesChange, onMenuClick, onNewChat }) => {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const textareaRef = useRef(null);
   const bottomRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -123,16 +33,50 @@ const Main = ({ onMenuClick }) => {
     const text = input.trim();
     if (!text || loading) return;
 
-    setMessages(prev => [...prev, { role: "user", text }]);
+    const newMessages = [...messages, { role: "user", text }];
+    onMessagesChange(newMessages);
     setInput("");
     setLoading(true);
     setError("");
 
     try {
       const aiResponse = await runChat(text);
-      setMessages(prev => [...prev, { role: "ai", text: aiResponse }]);
+      onMessagesChange([...newMessages, { role: "ai", text: aiResponse }]);
     } catch (err) {
       setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const newMessages = [...messages, { role: "user", text: `📄 ${file.name}`, isPdf: true }];
+    onMessagesChange(newMessages);
+    setLoading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/rag/process-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.detail || data.error || 'Failed to process PDF');
+      } else {
+        onMessagesChange([...newMessages, { role: "ai", text: "PDF uploaded and processed! You can now ask questions about it." }]);
+      }
+    } catch (err) {
+      setError("Failed to upload PDF. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -145,6 +89,7 @@ const Main = ({ onMenuClick }) => {
     }
   };
 
+  const { user } = useUser();
   const showWelcome = messages.length === 0 && !loading;
 
   return (
@@ -152,12 +97,12 @@ const Main = ({ onMenuClick }) => {
       <div className="nav">
         <div className="nav-left">
           <button className="nav-menu-btn" onClick={onMenuClick}>
-            <Menu size={20} strokeWidth={1.5} />
+            <Menu size={28} strokeWidth={1.5} />
           </button>
-          <p>YouLearn</p>
+          <p onClick={onNewChat} style={{ cursor: 'pointer', fontSize: '30px', fontWeight: '600' }}>YouLearn</p>
         </div>
         <div className="user-icon">
-          <User size={24} strokeWidth={1.5} />
+          <UserButton />
         </div>
       </div>
 
@@ -165,16 +110,8 @@ const Main = ({ onMenuClick }) => {
         {showWelcome ? (
           <div className="welcome">
             <div className="greet">
-              <p><span>Hello, User</span></p>
+              <p><span>Hello, {user?.firstName || "User"}</span></p>
               <p>How can I help you today?</p>
-            </div>
-            <div className="cards">
-              {SUGGESTIONS.map((s, i) => (
-                <div className="card" key={i}>
-                  <p>{s.text}</p>
-                  <div className="card-icon">{s.icon}</div>
-                </div>
-              ))}
             </div>
           </div>
         ) : (
@@ -182,11 +119,13 @@ const Main = ({ onMenuClick }) => {
             {messages.map((msg, i) =>
               msg.role === "user" ? (
                 <div className="msg-user" key={i}>
-                  <div className="bubble">{msg.text}</div>
+                  <div className={`bubble ${msg.isPdf ? 'pdf-bubble' : ''}`}>
+                    {msg.isPdf && <FileText size={16} strokeWidth={1.5} style={{ marginRight: 6, verticalAlign: 'middle' }} />}
+                    {msg.text}
+                  </div>
                 </div>
               ) : (
                 <div className="msg-ai" key={i}>
-                  <div className="ai-avatar">Y</div>
                   <div className="bubble">{formatText(msg.text)}</div>
                 </div>
               )
@@ -194,7 +133,6 @@ const Main = ({ onMenuClick }) => {
 
             {loading && (
               <div className="typing-indicator">
-                <div className="ai-avatar">Y</div>
                 <div className="typing-dots">
                   <span /><span /><span />
                 </div>
@@ -217,12 +155,20 @@ const Main = ({ onMenuClick }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
           />
+          <input
+              type="file"
+              accept=".pdf"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handlePdfUpload}
+            />
           <div className="search-icons">
-            <button className="icon-btn" title="Attach">
-              <Image size={20} strokeWidth={1.5} />
-            </button>
-            <button className="icon-btn" title="Voice">
-              <Mic size={20} strokeWidth={1.5} />
+            <button
+              className="icon-btn"
+              title="Upload PDF"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 18 }} />
             </button>
             <button
               className={`send-btn ${input.trim() ? "active" : ""}`}
