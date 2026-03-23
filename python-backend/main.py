@@ -4,9 +4,7 @@ from pydantic import BaseModel
 from typing import List
 import os
 from dotenv import load_dotenv
-
-from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from groq import Groq
 
 load_dotenv()
 
@@ -20,13 +18,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def get_llm():
-    return ChatGroq(temperature=0, model_name="llama-3.1-8b-instant")
+def get_client():
+    return Groq()
 
 class Message(BaseModel):
     role: str
     text: str
-    isPdf: bool = False
 
 class ChatRequest(BaseModel):
     messages: List[Message]
@@ -37,19 +34,27 @@ async def chat(request: ChatRequest):
         if not request.messages or len(request.messages) == 0:
             raise HTTPException(status_code=400, detail="No messages provided")
 
-        system_prompt = "You are a helpful AI assistant."
-        llm_messages = [SystemMessage(content=system_prompt)]
+        groq_messages = [{"role": "system", "content": "You are a helpful AI assistant."}]
 
         for msg in request.messages:
             if msg.role == "user":
-                llm_messages.append(HumanMessage(content=msg.text))
+                groq_messages.append({"role": "user", "content": msg.text})
             elif msg.role == "ai":
-                llm_messages.append(AIMessage(content=msg.text))
+                groq_messages.append({"role": "assistant", "content": msg.text})
 
-        llm = get_llm()
-        response = llm.invoke(llm_messages)
-        
-        return {"reply": response.content}
+        client = get_client()
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=groq_messages,
+            temperature=1,
+            max_completion_tokens=8192,
+            top_p=1,
+            stream=False,
+            stop=None
+        )
+
+        reply = completion.choices[0].message.content
+        return {"reply": reply}
         
     except HTTPException:
         raise

@@ -7,19 +7,28 @@ dotenv.config()
 
 const app = express()
 app.use(cors())
-
-// Proxy chat requests to the Python FastAPI backend
-app.use('/api/chat', createProxyMiddleware({
-  target: 'http://localhost:8000',
-  changeOrigin: true,
-  pathRewrite: { '^/api/chat': '/api/chat' },
-}))
-
 app.use(express.json())
 
 const PORT = process.env.PORT || 5178
 const API_KEY = process.env.GROQ_API_KEY
+const FASTAPI_URL = 'http://127.0.0.1:8000'
 
+// ── /api/chat → forward directly to FastAPI ──────────────────────
+app.post('/api/chat', async (req, res) => {
+  try {
+    const upstream = await fetch(`${FASTAPI_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    })
+    const data = await upstream.json()
+    res.status(upstream.status).json(data)
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach backend: ' + err.message })
+  }
+})
+
+// ── /api/gemini → direct Groq call ──────────────────────────────
 app.post('/api/gemini', async (req, res) => {
   try {
     const prompt = req.body.prompt

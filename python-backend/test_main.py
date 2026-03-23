@@ -5,13 +5,15 @@ from main import app
 
 client = TestClient(app)
 
-@patch('main.get_llm')
-def test_chat_success(mock_get_llm):
-    mock_llm = MagicMock()
-    mock_response = MagicMock()
-    mock_response.content = "This is the native AI response."
-    mock_llm.invoke.return_value = mock_response
-    mock_get_llm.return_value = mock_llm
+@patch('main.get_client')
+def test_chat_success(mock_get_client):
+    mock_client = MagicMock()
+    mock_completion = MagicMock()
+    mock_choice = MagicMock()
+    mock_choice.message.content = "Hello! How can I help you?"
+    mock_completion.choices = [mock_choice]
+    mock_client.chat.completions.create.return_value = mock_completion
+    mock_get_client.return_value = mock_client
 
     payload = {
         "messages": [
@@ -21,12 +23,13 @@ def test_chat_success(mock_get_llm):
     
     response = client.post("/api/chat", json=payload)
     assert response.status_code == 200
-    assert response.json() == {"reply": "This is the native AI response."}
+    assert response.json() == {"reply": "Hello! How can I help you?"}
     
-    mock_llm.invoke.assert_called_once()
-    llm_call_args = mock_llm.invoke.call_args[0][0]
-    assert len(llm_call_args) == 2 
-    assert "Hello" in llm_call_args[1].content
+    mock_client.chat.completions.create.assert_called_once()
+    call_kwargs = mock_client.chat.completions.create.call_args[1]
+    assert call_kwargs["model"] == "openai/gpt-oss-120b"
+    assert call_kwargs["messages"][0]["role"] == "system"
+    assert call_kwargs["messages"][1]["content"] == "Hello"
 
 def test_chat_no_messages():
     payload = {"messages": []}
