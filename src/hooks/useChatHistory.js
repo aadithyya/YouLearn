@@ -63,10 +63,7 @@ export const useChatHistory = () => {
       // Auto-generate title from first user message if it's currently "New Chat"
       if (chat.title === 'New Chat' && newMessages.length > 0) {
         const firstUserMsg = newMessages.find(m => m.role === 'user');
-        if (firstUserMsg && !firstUserMsg.isPdf) {
-           updatedChat.title = generateTitle(firstUserMsg.text);
-        } else if (firstUserMsg && firstUserMsg.isPdf) {
-           // If first is PDF, it starts with 📄
+        if (firstUserMsg) {
            updatedChat.title = generateTitle(firstUserMsg.text);
         }
       }

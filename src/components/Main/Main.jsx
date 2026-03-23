@@ -3,12 +3,9 @@ import "./Main.css";
 import runChat from "../../config/geminiClient";
 import { formatText } from "../../utils/textFormatters.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGraduationCap, faBrain, faCubes, faNewspaper, faFilePdf } from "@fortawesome/free-solid-svg-icons";
-import { User, Send, Menu, FileText } from "lucide-react";
+import { faGraduationCap, faBrain, faCubes, faNewspaper } from "@fortawesome/free-solid-svg-icons";
+import { User, Send, Menu } from "lucide-react";
 import { UserButton, useUser } from "@clerk/react";
-
-
-
 
 const Main = ({ messages = [], onMessagesChange, onMenuClick, onNewChat }) => {
   const [input, setInput] = useState("");
@@ -16,7 +13,6 @@ const Main = ({ messages = [], onMessagesChange, onMenuClick, onNewChat }) => {
   const [error, setError] = useState("");
   const textareaRef = useRef(null);
   const bottomRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -40,43 +36,10 @@ const Main = ({ messages = [], onMessagesChange, onMenuClick, onNewChat }) => {
     setError("");
 
     try {
-      const aiResponse = await runChat(text);
+      const aiResponse = await runChat(newMessages);
       onMessagesChange([...newMessages, { role: "ai", text: aiResponse }]);
     } catch (err) {
       setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePdfUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
-
-    const newMessages = [...messages, { role: "user", text: `📄 ${file.name}`, isPdf: true }];
-    onMessagesChange(newMessages);
-    setLoading(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/rag/process-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setError(data.detail || data.error || 'Failed to process PDF');
-      } else {
-        onMessagesChange([...newMessages, { role: "ai", text: "PDF uploaded and processed! You can now ask questions about it." }]);
-      }
-    } catch (err) {
-      setError("Failed to upload PDF. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -119,8 +82,7 @@ const Main = ({ messages = [], onMessagesChange, onMenuClick, onNewChat }) => {
             {messages.map((msg, i) =>
               msg.role === "user" ? (
                 <div className="msg-user" key={i}>
-                  <div className={`bubble ${msg.isPdf ? 'pdf-bubble' : ''}`}>
-                    {msg.isPdf && <FileText size={16} strokeWidth={1.5} style={{ marginRight: 6, verticalAlign: 'middle' }} />}
+                  <div className="bubble">
                     {msg.text}
                   </div>
                 </div>
@@ -155,21 +117,7 @@ const Main = ({ messages = [], onMessagesChange, onMenuClick, onNewChat }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <input
-              type="file"
-              accept=".pdf"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              onChange={handlePdfUpload}
-            />
           <div className="search-icons">
-            <button
-              className="icon-btn"
-              title="Upload PDF"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 18 }} />
-            </button>
             <button
               className={`send-btn ${input.trim() ? "active" : ""}`}
               onClick={handleSend}

@@ -1,9 +1,9 @@
 
-async function runChat(prompt) {
-  const res = await fetch('/api/rag/chat', {
+const runChat = async (messages) => {
+  const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [{ role: 'user', text: prompt }] }),
+    body: JSON.stringify({ messages }),
   });
   if (!res.ok) {
     const text = await res.text();

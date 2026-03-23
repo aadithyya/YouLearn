@@ -1,78 +1,74 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
+import runChat from './geminiClient'
 
-// Mock global fetch before importing the module
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
-
-// Dynamic import so the stub is in place
-const { default: runChat } = await import('./geminiClient.js')
+global.fetch = vi.fn()
 
 describe('runChat', () => {
   beforeEach(() => {
-    mockFetch.mockReset()
+    vi.clearAllMocks()
   })
 
-  it('returns the reply text on successful response', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('makes a successful API call with a prompt and returns data', async () => {
+    global.fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ reply: 'AI response text' }),
     })
 
-    const result = await runChat('Hello')
+    const result = await runChat([{ role: 'user', text: 'Test prompt' }])
     expect(result).toBe('AI response text')
   })
 
-  it('sends the correct request to /api/gemini', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('sends the correct request to /api/chat', async () => {
+    global.fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ reply: 'ok' }),
     })
 
-    await runChat('Test prompt')
+    await runChat([{ role: 'user', text: 'Hello' }]);
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/gemini', {
+    expect(global.fetch).toHaveBeenCalledWith('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: 'Test prompt' }),
+      body: JSON.stringify({ messages: [{ role: 'user', text: 'Hello' }] }),
     })
   })
 
-  it('throws an error when the response is not ok', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('throws an error if the fetch fails (non-200 OK)', async () => {
+    global.fetch.mockResolvedValueOnce({
       ok: false,
-      text: async () => 'Internal Server Error',
+      status: 500,
+      text: async () => 'Internal Server Error'
     })
 
-    await expect(runChat('bad prompt')).rejects.toThrow('Internal Server Error')
+    await expect(runChat([{ role: 'user', text: 'Hello' }])).rejects.toThrow('Internal Server Error')
+    expect(global.fetch).toHaveBeenCalledWith('/api/chat', expect.any(Object))
   })
 
-  it('returns empty string when reply field is missing', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('returns empty string if the API does not return a reply field', async () => {
+    global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({}),
+      json: async () => ({ someOtherField: 'AI response text' }), 
     })
 
-    const result = await runChat('test')
+    const result = await runChat([{ role: 'user', text: 'Hello' }]);
     expect(result).toBe('')
   })
 
-  it('prefers reply over text field', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ reply: 'from reply', text: 'from text' }),
-    })
+  it('throws an error if there is a network error', async () => {
+    global.fetch.mockRejectedValueOnce(new Error('Network Error'))
 
-    const result = await runChat('test')
-    expect(result).toBe('from reply')
+    await expect(runChat([{ role: 'user', text: 'Hello' }])).rejects.toThrow('Network Error')
+    expect(global.fetch).toHaveBeenCalledWith('/api/chat', expect.any(Object))
   })
 
-  it('falls back to text field when reply is absent', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ text: 'fallback text' }),
+  it('throws an error if server returns 400 Bad Request', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () => 'Bad Request: No messages provided'
     })
 
-    const result = await runChat('test')
-    expect(result).toBe('fallback text')
+    await expect(runChat([{ role: 'user', text: '' }])).rejects.toThrow('Bad Request: No messages provided')
+    expect(global.fetch).toHaveBeenCalledWith('/api/chat', expect.any(Object))
   })
 })
