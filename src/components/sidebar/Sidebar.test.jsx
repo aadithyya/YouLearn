@@ -13,43 +13,47 @@ describe('Sidebar', () => {
     onNewChat: vi.fn(),
   }
 
-  it('calls onNewChat when the new-chat button is clicked (collapsed)', () => {
+  it('calls onNewChat when the Standard Chat dropdown item is clicked', () => {
     const onNewChat = vi.fn()
     const { container } = render(
       <Sidebar {...defaultProps} onNewChat={onNewChat} />
     )
 
-    const newChatBtn = container.querySelector('.newchat')
+    const newChatBtn = container.querySelector('.newchat-btn')
     expect(newChatBtn).not.toBeNull()
     fireEvent.click(newChatBtn)
-    expect(onNewChat).toHaveBeenCalledTimes(1)
+    
+    // Dropdown opens
+    const standardOption = container.querySelectorAll('.dropdown-item')[0]
+    fireEvent.click(standardOption)
+    expect(onNewChat).toHaveBeenCalledWith("standard")
   })
 
-  it('calls onNewChat when the new-chat button is clicked (extended)', () => {
+  it('calls onNewChat when the Feynman Technique dropdown item is clicked', () => {
     const onNewChat = vi.fn()
     const { container } = render(
-      <Sidebar {...defaultProps} extended={true} onNewChat={onNewChat} />
+      <Sidebar {...defaultProps} onNewChat={onNewChat} />
     )
 
-    const newChatBtn = container.querySelector('.newchat')
+    const newChatBtn = container.querySelector('.newchat-btn')
     fireEvent.click(newChatBtn)
-    expect(onNewChat).toHaveBeenCalledTimes(1)
+    
+    // Dropdown opens
+    const feynmanOption = container.querySelectorAll('.dropdown-item')[1]
+    fireEvent.click(feynmanOption)
+    expect(onNewChat).toHaveBeenCalledWith("feynman")
   })
 
-  it('shows "New Chat" label text only when extended', () => {
+  it('adds extended-btn class when extended', () => {
     const { container, rerender } = render(
       <Sidebar {...defaultProps} extended={false} />
     )
 
-    // Collapsed: no <p> inside .newchat
-    const collapsedP = container.querySelector('.newchat p')
-    expect(collapsedP).toBeNull()
+    const btn = container.querySelector('.newchat-btn')
+    expect(btn.classList.contains('extended-btn')).toBe(false)
 
-    // Extended: shows <p>New Chat</p>
     rerender(<Sidebar {...defaultProps} extended={true} />)
-    const extendedP = container.querySelector('.newchat p')
-    expect(extendedP).not.toBeNull()
-    expect(extendedP.textContent).toBe('New Chat')
+    expect(btn.classList.contains('extended-btn')).toBe(true)
   })
 
   it('calls onToggle when the menu bar is clicked', () => {
@@ -101,7 +105,7 @@ describe('Sidebar', () => {
       const { container } = render(
         <Sidebar extended={false} onToggle={vi.fn()} onClose={vi.fn()} />
       )
-      const newChatBtn = container.querySelector('.newchat')
+      const newChatBtn = container.querySelector('.newchat-btn')
       fireEvent.click(newChatBtn)
     }).not.toThrow()
   })

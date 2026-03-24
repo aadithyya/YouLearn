@@ -210,7 +210,154 @@
   color: #d93025;
   font-size: 14px;
 }
+/* ── Inline RAG Toggle ── */
+.inline-rag-toggle-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 
+.inline-rag-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.inline-rag-toggle.off {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+.inline-rag-toggle.off:hover {
+  background: #f3f4f6;
+}
+
+/* Pulse animation on activation */
+@keyframes softPulse {
+  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.inline-rag-toggle.on {
+  background: #4f46e5;
+  color: white;
+  animation: softPulse 0.4s ease-out;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+}
+
+.inline-rag-toggle.locked-on {
+  background: #e5e7eb;
+  color: #9ca3af;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.rag-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  animation: fadeInOut 3s forwards;
+  pointer-events: none;
+}
+.rag-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #1f2937 transparent transparent transparent;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, 5px); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  90% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -5px); }
+}
+
+/* ── Feynman UI State ── */
+.feynman-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+  margin-bottom: -10px; /* pull down into the searchbox */
+  position: relative;
+  z-index: 10;
+  animation: slideDown 0.3s ease-out;
+}
+
+.feynman-active-box {
+  border: 2px solid #fbbf24;
+  border-radius: 0 0 24px 24px;
+  animation: pulseWarning 2s infinite;
+}
+
+@keyframes pulseWarning {
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2); }
+  50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2); }
+}
+
+.validate-btn-text {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.feynman-no-docs-tip {
+  text-align: center;
+  padding: 10px;
+  color: #ea580c;
+  font-size: 13px;
+  background: #ffedd5;
+  border-radius: 8px;
+  margin: 10px auto;
+  max-width: 600px;
+}
+
+/* Feynman Chat Message Styles (Structured validation) */
+.msg-ai.feynman-msg .bubble h3 {
+  margin: 12px 0 6px 0;
+  font-size: 15px;
+}
+.msg-ai.feynman-msg .bubble {
+  border-left: 3px solid #e5e7eb;
+}
+
+.upload-status {
+  max-width: 900px;
+  margin: 8px auto;
+  width: 100%;
+  padding: 10px 16px;
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  border-radius: 10px;
+  color: #2e7d32;
+  font-size: 14px;
+}
 
 
 /* ── Input area ── */

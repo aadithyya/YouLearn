@@ -53,12 +53,14 @@ describe('useChatHistory', () => {
 
     act(() => {
       result.current.updateChatMessages(newChatId, [
-        { role: 'user', text: 'Hello, world! This is a long message to test truncation limit logic.' }
+        { role: 'user', text: 'what is an operating system and how does it work' }
       ]);
     });
 
     const activeChat = result.current.chats[0];
     expect(activeChat.messages).toHaveLength(1);
-    expect(activeChat.title).toBe('Hello, world! This is a long m...'); 
+    // extractTitle strips "what is an" → "Operating System And How"
+    expect(activeChat.title).toBe('Operating System And How');
+    expect(activeChat.hasBeenNamed).toBe(true);
   });
 });

@@ -6,3 +6,10 @@ python-dotenv
 pydantic
 pytest
 httpx
+pdfplumber
+pytesseract
+pdf2image
+langchain-text-splitters
+langchain-huggingface
+langchain-groq
+qdrant-client

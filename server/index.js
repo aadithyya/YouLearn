@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { createProxyMiddleware } from 'http-proxy-middleware'
+import multer from 'multer'
 
 dotenv.config()
 
@@ -12,11 +12,45 @@ app.use(express.json())
 const PORT = process.env.PORT || 5178
 const API_KEY = process.env.GROQ_API_KEY
 const FASTAPI_URL = 'http://127.0.0.1:8000'
+const upload = multer({ storage: multer.memoryStorage() })
 
-// ── /api/chat → forward directly to FastAPI ──────────────────────
+// ── /api/chat → relay to FastAPI ──────────────────────────────────
 app.post('/api/chat', async (req, res) => {
   try {
     const upstream = await fetch(`${FASTAPI_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    })
+    const data = await upstream.json()
+    res.status(upstream.status).json(data)
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach backend: ' + err.message })
+  }
+})
+
+// ── /api/upload → relay PDF files to FastAPI ──────────────────────
+app.post('/api/upload', upload.array('files'), async (req, res) => {
+  try {
+    const formData = new FormData()
+    for (const file of req.files) {
+      formData.append('files', new Blob([file.buffer], { type: file.mimetype }), file.originalname)
+    }
+    const upstream = await fetch(`${FASTAPI_URL}/api/upload`, {
+      method: 'POST',
+      body: formData,
+    })
+    const data = await upstream.json()
+    res.status(upstream.status).json(data)
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach backend: ' + err.message })
+  }
+})
+
+// ── /api/rag/chat → relay RAG chat to FastAPI ────────────────────
+app.post('/api/rag/chat', async (req, res) => {
+  try {
+    const upstream = await fetch(`${FASTAPI_URL}/api/rag/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body),

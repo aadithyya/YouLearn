@@ -2,6 +2,65 @@ import { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'youlearn-chats';
 
+// CHANGED: Smart title extraction — strips question words, filler, and extracts 2-4 word topic
+function extractTitle(message) {
+  if (!message || !message.trim()) return '';
+
+  let text = message.trim();
+
+  // Only parse the first 12 words if message is very long
+  const words = text.split(/\s+/);
+  if (words.length > 12) {
+    text = words.slice(0, 12).join(' ');
+  }
+
+  // Strip common question/filler prefixes (case-insensitive)
+  const prefixes = [
+    /^(what is|what are|what was|what were|what does|what do)/i,
+    /^(how does|how do|how is|how are|how can|how to)/i,
+    /^(why is|why are|why does|why do|why did)/i,
+    /^(when is|when are|when does|when did|when was)/i,
+    /^(where is|where are|where does|where did)/i,
+    /^(who is|who are|who was|who were)/i,
+    /^(can you|could you|would you|will you)/i,
+    /^(tell me about|explain|describe|define|summarize|summarise)/i,
+    /^(i want to know about|i need to understand|help me with)/i,
+    /^(please|hey|hi|hello)/i,
+  ];
+
+  for (const regex of prefixes) {
+    text = text.replace(regex, '').trim();
+  }
+
+  // Strip leading filler words
+  const fillerWords = ['a', 'an', 'the', 'me', 'about', 'of', 'in', 'on', 'for', 'to', 'and', 'or'];
+  let remaining = text.split(/\s+/);
+  while (remaining.length > 0 && fillerWords.includes(remaining[0].toLowerCase())) {
+    remaining.shift();
+  }
+
+  // Edge case: if nothing remains after stripping, use first 4 words of original message
+  if (remaining.length === 0) {
+    remaining = message.trim().split(/\s+/).slice(0, 4);
+  }
+
+  // Trim to max 4 words
+  remaining = remaining.slice(0, 4);
+
+  // Edge case: if the result is only numbers/gibberish (no letter), fallback
+  const joined = remaining.join(' ');
+  if (!/[a-zA-Z]/.test(joined)) {
+    return 'Study Session';
+  }
+
+  // Title Case
+  const titled = remaining
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  return titled;
+}
+
 export const useChatHistory = () => {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -35,18 +94,16 @@ export const useChatHistory = () => {
     }
   }, [chats]);
 
-  const generateTitle = (text) => {
-    if (!text) return 'New Chat';
-    return text.length > 30 ? text.substring(0, 30) + '...' : text;
-  };
-
-  const createNewChat = () => {
+  // CHANGED: Accept optional mode ("standard" | "feynman")
+  const createNewChat = (mode = "standard") => {
     const newChatId = Date.now().toString() + '-' + Math.random().toString(36).substring(2, 9);
     const newChat = {
       id: newChatId,
-      title: 'New Chat',
+      title: mode === "feynman" ? 'Feynman Session' : 'New Chat',
+      mode: mode, // CHANGED: Track session mode
       messages: [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      hasBeenNamed: false
     };
     
     setChats(prev => [newChat, ...prev]);
@@ -60,14 +117,26 @@ export const useChatHistory = () => {
       
       const updatedChat = { ...chat, messages: newMessages };
       
-      // Auto-generate title from first user message if it's currently "New Chat"
-      if (chat.title === 'New Chat' && newMessages.length > 0) {
+      // CHANGED: Use smart extractTitle on first user message, only if not yet named
+      if (!chat.hasBeenNamed && newMessages.length > 0) {
         const firstUserMsg = newMessages.find(m => m.role === 'user');
-        if (firstUserMsg) {
-           updatedChat.title = generateTitle(firstUserMsg.text);
+        if (firstUserMsg && firstUserMsg.text && firstUserMsg.text.trim()) {
+          const smartTitle = extractTitle(firstUserMsg.text);
+          if (smartTitle) {
+            updatedChat.title = smartTitle;
+            updatedChat.hasBeenNamed = true;
+          }
         }
       }
       return updatedChat;
+    }));
+  };
+
+  // CHANGED: Allow manual rename from sidebar double-click
+  const renameChat = (id, newTitle) => {
+    setChats(prevChats => prevChats.map(chat => {
+      if (chat.id !== id) return chat;
+      return { ...chat, title: newTitle, hasBeenNamed: true };
     }));
   };
 
@@ -80,7 +149,6 @@ export const useChatHistory = () => {
 
     if (activeChatId === id) {
       if (newChats.length > 0) {
-        // select the chat at the same index, or the last one if we deleted the last item
         setActiveChatId(newChats[Math.min(chatIndex, newChats.length - 1)].id);
       } else {
         setActiveChatId(null);
@@ -94,6 +162,8 @@ export const useChatHistory = () => {
     setActiveChatId,
     createNewChat,
     updateChatMessages,
+    // CHANGED: Expose renameChat for sidebar double-click rename
+    renameChat,
     deleteChat
   };
 };

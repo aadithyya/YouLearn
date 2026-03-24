@@ -7,11 +7,12 @@ import { useChatHistory } from "./hooks/useChatHistory";
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { chats, activeChatId, setActiveChatId, createNewChat, updateChatMessages, deleteChat } = useChatHistory();
+  const { chats, activeChatId, setActiveChatId, createNewChat, updateChatMessages, renameChat, deleteChat } = useChatHistory();
   const { isSignedIn, isLoaded } = useAuth();
 
-  const handleNewChat = () => {
-    createNewChat();
+  const handleNewChat = (mode) => {
+    const finalMode = typeof mode === "string" ? mode : "standard";
+    createNewChat(finalMode);
     setSidebarOpen(false);
   };
 
@@ -49,11 +50,13 @@ const App = () => {
               setActiveChatId(id);
               setSidebarOpen(false);
             }}
+            onRenameChat={renameChat}
             onDeleteChat={deleteChat}
           />
           <Main 
             key={activeChatId || 'empty'} 
             messages={messages}
+            chatMode={activeChat?.mode || "standard"} // CHANGED: Pass current mode to Main
             onMessagesChange={handleMessagesChange}
             onMenuClick={() => setSidebarOpen(prev => !prev)} 
             onNewChat={handleNewChat}
