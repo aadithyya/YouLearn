@@ -13,29 +13,46 @@ vi.mock('@clerk/react', () => ({
 
 // Track Main mount/unmount to verify remounting on new chat
 let mainMountCount = 0
+let lastMainProps = {}
 
 vi.mock('./components/main/main', () => ({
   default: (props) => {
-    // Use a ref-like pattern via useEffect to count mounts
     const React = require('react')
     React.useEffect(() => {
       mainMountCount++
     }, [])
+    lastMainProps = props
     return <div data-testid="main-component" />
   },
 }))
 
+let lastSidebarProps = {}
+
 vi.mock('./components/sidebar/Sidebar', () => ({
-  default: ({ onNewChat, extended, onToggle, onClose }) => (
-    <div data-testid="sidebar">
-      <button data-testid="new-chat-btn" onClick={onNewChat}>
-        New Chat
-      </button>
-      <button data-testid="toggle-btn" onClick={onToggle}>
-        Toggle
-      </button>
-    </div>
-  ),
+  default: (props) => {
+    lastSidebarProps = props
+    return (
+      <div data-testid="sidebar">
+        <button data-testid="new-chat-btn" onClick={props.onNewChat}>
+          New Chat
+        </button>
+        <button data-testid="new-chat-feynman" onClick={() => props.onNewChat("feynman")}>
+          Feynman
+        </button>
+        <button data-testid="toggle-btn" onClick={props.onToggle}>
+          Toggle
+        </button>
+        <button data-testid="close-btn" onClick={props.onClose}>
+          Close
+        </button>
+        {props.chats && props.chats.map(c => (
+          <button key={c.id} data-testid={`chat-${c.id}`} onClick={() => props.onSelectChat(c.id)}>
+            {c.title}
+          </button>
+        ))}
+      </div>
+    )
+  },
 }))
 
 vi.mock('./components/login/Login', () => ({
@@ -47,9 +64,11 @@ import { useAuth } from '@clerk/react'
 
 // ─── Tests ──────────────────────────────────────────────────────
 
-describe('App – New Chat functionality', () => {
+describe('App – Authentication', () => {
   beforeEach(() => {
     mainMountCount = 0
+    lastMainProps = {}
+    lastSidebarProps = {}
     useAuth.mockReturnValue({ isSignedIn: true, isLoaded: true })
   })
 
@@ -72,14 +91,32 @@ describe('App – New Chat functionality', () => {
     expect(container.innerHTML).toBe('')
   })
 
+  it('does not render Main when not signed in', () => {
+    useAuth.mockReturnValue({ isSignedIn: false, isLoaded: true })
+    render(<App />)
+    expect(screen.queryByTestId('main-component')).toBeNull()
+  })
+
+  it('does not render Sidebar when not signed in', () => {
+    useAuth.mockReturnValue({ isSignedIn: false, isLoaded: true })
+    render(<App />)
+    expect(screen.queryByTestId('sidebar')).toBeNull()
+  })
+})
+
+describe('App – New Chat functionality', () => {
+  beforeEach(() => {
+    mainMountCount = 0
+    lastMainProps = {}
+    lastSidebarProps = {}
+    useAuth.mockReturnValue({ isSignedIn: true, isLoaded: true })
+  })
+
   it('remounts Main when New Chat button is clicked', () => {
     render(<App />)
     const initialCount = mainMountCount
 
-    // Click "New Chat"
     fireEvent.click(screen.getByTestId('new-chat-btn'))
-
-    // Main should have been remounted (count incremented)
     expect(mainMountCount).toBe(initialCount + 1)
   })
 
@@ -97,8 +134,88 @@ describe('App – New Chat functionality', () => {
   it('Main component remains in DOM after New Chat click', () => {
     render(<App />)
     fireEvent.click(screen.getByTestId('new-chat-btn'))
-
-    // Main should still be rendered (just a fresh instance)
     expect(screen.getByTestId('main-component')).not.toBeNull()
+  })
+
+  it('creates feynman chat when feynman button is clicked', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('new-chat-feynman'))
+
+    // The last sidebar props should now have chats with a feynman mode entry
+    const feynmanChats = lastSidebarProps.chats.filter(c => c.mode === 'feynman')
+    expect(feynmanChats.length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('App – Sidebar Toggle', () => {
+  beforeEach(() => {
+    mainMountCount = 0
+    lastMainProps = {}
+    lastSidebarProps = {}
+    useAuth.mockReturnValue({ isSignedIn: true, isLoaded: true })
+  })
+
+  it('passes extended=false to Sidebar initially', () => {
+    render(<App />)
+    expect(lastSidebarProps.extended).toBe(false)
+  })
+
+  it('toggles sidebar open when toggle is clicked', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('toggle-btn'))
+    expect(lastSidebarProps.extended).toBe(true)
+  })
+
+  it('toggles sidebar closed when toggle is clicked again', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('toggle-btn'))
+    expect(lastSidebarProps.extended).toBe(true)
+
+    fireEvent.click(screen.getByTestId('toggle-btn'))
+    expect(lastSidebarProps.extended).toBe(false)
+  })
+
+  it('closes sidebar when close button is clicked', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('toggle-btn'))
+    expect(lastSidebarProps.extended).toBe(true)
+
+    fireEvent.click(screen.getByTestId('close-btn'))
+    expect(lastSidebarProps.extended).toBe(false)
+  })
+
+  it('closes sidebar when new chat is created', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('toggle-btn'))
+    expect(lastSidebarProps.extended).toBe(true)
+
+    fireEvent.click(screen.getByTestId('new-chat-btn'))
+    expect(lastSidebarProps.extended).toBe(false)
+  })
+})
+
+describe('App – Chat Selection', () => {
+  beforeEach(() => {
+    mainMountCount = 0
+    lastMainProps = {}
+    lastSidebarProps = {}
+    useAuth.mockReturnValue({ isSignedIn: true, isLoaded: true })
+  })
+
+  it('passes empty messages to Main initially with no chats', () => {
+    render(<App />)
+    expect(lastMainProps.messages).toEqual([])
+  })
+
+  it('creates a new chat and passes it to sidebar', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('new-chat-btn'))
+
+    expect(lastSidebarProps.chats.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('passes standard chatMode by default', () => {
+    render(<App />)
+    expect(lastMainProps.chatMode).toBe('standard')
   })
 })

@@ -47,7 +47,7 @@ app.post('/api/upload', upload.array('files'), async (req, res) => {
   }
 })
 
-// ── /api/rag/chat → relay RAG chat to FastAPI ────────────────────
+
 app.post('/api/rag/chat', async (req, res) => {
   try {
     const upstream = await fetch(`${FASTAPI_URL}/api/rag/chat`, {
@@ -62,7 +62,7 @@ app.post('/api/rag/chat', async (req, res) => {
   }
 })
 
-// ── /api/gemini → direct Groq call ──────────────────────────────
+
 app.post('/api/gemini', async (req, res) => {
   try {
     const prompt = req.body.prompt

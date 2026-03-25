@@ -162,7 +162,6 @@ export const useChatHistory = () => {
     setActiveChatId,
     createNewChat,
     updateChatMessages,
-    // CHANGED: Expose renameChat for sidebar double-click rename
     renameChat,
     deleteChat
   };
